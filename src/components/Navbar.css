@@ -1,0 +1,39 @@
+.navbar-brand{
+    margin-left:5%;
+}
+
+.navbar-collapse{
+    margin-left:  20%;
+    /* margin-right: 20px; */
+}
+
+.navbar-nav .nav-link, .logo-item .nav-link{
+    color: white !important;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+/* .right-item .nav-link{
+    color: #198754 !important;
+    font-size: 16px;
+    font-weight: 400;
+    background-color: white;
+    border-radius: 20px;
+    padding: 5px 17px;
+    margin-left: 10px;
+}    */
+
+.right-item{
+    margin-right: 7%;
+
+}
+.btn-start {
+    color: #198754 !important;
+    font-size: 16px;
+    font-weight: 400;
+    /* border: 1px solid white; */
+    background-color: white;
+    border-radius: 20px;
+    padding: 5px 17px;
+    margin-top: 5px;
+}

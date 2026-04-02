@@ -1,0 +1,161 @@
+.landing-container {
+    width: 100%;
+    height: 110vh;
+    background-image: url('../assets/landing-bg.png');
+    background-size: cover;
+    background-position: center;
+    padding-top: 80px;        /* pushes below navbar */
+    display: flex;
+    align-items: center;      /* vertical center */
+}
+
+.landing-text {
+    text-align: left;         /* text aligned left */
+    padding-left: 40px;       /* left spacing */
+}
+
+.farmer-img {
+    max-height: 80vh;
+    object-fit: contain;
+}
+
+.btns .btn-landing {
+    color: whitesmoke;
+    font-size: 16px;
+    font-weight: 400;
+    border: 1px solid whitesmoke;
+    background-color: transparent;
+    border-radius: 20px;
+    padding: 8px 24px;
+}
+
+.btns .btn-landing:hover {
+    background-color: white;
+    color: green !important;
+    transition: 0.3s;
+}
+
+/* Stats Section */
+.stats-section {
+    background-color: #f5f0e8; 
+    padding: 40px 20px;
+}
+
+.stat-card {
+    background-color: white;
+    border-radius: 16px;
+    padding: 30px 20px;
+    text-align: center;
+    margin: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #198754;  
+    margin-bottom: 8px;
+    z-index: 10;
+}
+
+.stat-text {
+    font-size: 1rem;
+    color: #555;
+    margin: 0;
+}
+
+
+
+/* How it Works Section */
+.how-section {
+    background-color: #f5f0e8;   
+    padding: 80px 20px;
+}
+
+.how-title {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 10px;
+}
+
+.how-subtitle {
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 50px;
+}
+
+/* White card wrapping steps */
+.steps-card {
+    background-color: white;
+    border-radius: 24px;
+    padding: 50px 40px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* Each step */
+.step-item {
+    text-align: center;
+    padding: 10px;
+}
+
+/* Icon box */
+.step-icon-box {
+    background-color: #f0f0f0;
+    border-radius: 16px;
+    width: 90px;
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px auto;
+}
+
+.step-icon {
+    font-size: 2.2rem;
+    color: #198754;
+}
+
+.step-title {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #1a1a1a;
+    margin-bottom: 6px;
+}
+
+.step-desc {
+    font-size: 0.95rem;
+    color: #888;
+    margin: 0;
+}
+
+/* Arrow between steps */
+.arrow-col {
+    padding: 0 10px;
+    margin-bottom: 60px;   /* aligns with icon center */
+}
+
+.arrow-icon {
+    width: 2rem; 
+    height: auto;
+    color: #aaa;
+}
+
+/* Button */
+.btn-how {
+    background-color: #1a4a2e;
+    color: white;
+    border-radius: 30px;
+    padding: 12px 40px;
+    font-size: 1rem;
+    font-weight: 500;
+    border: none;
+}
+
+.btn-how:hover {
+    background-color: #198754;
+    color: white;
+    transition: 0.3s;
+}
