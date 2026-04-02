@@ -159,3 +159,64 @@
     color: white;
     transition: 0.3s;
 }
+
+
+/* Why Choose Us Section */
+.choose-section {
+    background-color: white;   
+    padding: 80px 20px;
+}
+.choose-card-title {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #1a1a1a;
+    margin-bottom: 8px;
+    text-align: left;
+}
+
+.choose-card-text {
+    font-size: 0.95rem;
+    color: #888;
+    text-align: left;
+    margin: 0;
+}
+
+.choose-item {
+    background-color: white;
+    border-radius: 16px;
+    padding: 30px 20px;
+    text-align: center;
+    margin: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+.choose-icon {
+    border-radius: 16px;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0; 
+    margin-bottom: 10px;
+}
+
+.sub-choose-section {   
+    background-color: #355E3B   ;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.btn-sub-choose {
+    background-color: #dfce32;
+    color: white;
+    border-radius: 30px;
+    padding: 12px 40px;
+    font-size: 1rem;
+    font-weight: 500;
+    border: none;
+}
+.btn-sub-choose:hover {
+    background-color: #a0b151;
+    color: white;
+    transition: 0.3s;
+}

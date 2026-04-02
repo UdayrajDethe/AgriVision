@@ -1,12 +1,13 @@
 import React from 'react'
 import './Navbar.css'
+import agrivision from '../assets/agriVision.png'
 
 export default function Navbar() {
   return (
     <>
-      <nav className="navbar navbar-expand-lg fixed-top navbar-dark bg-success px-4">
+      <nav className="navbar navbar-expand-lg fixed-top navbar-dark px-4">
         <a className="navbar-brand" href="#">
-          <img src="https://res.cloudinary.com/dzu5rgm5y/image/upload/v1752464503/logo-remove-bg_o0qxqr.png" width="40px" alt=""/>
+          <img src={agrivision} width="40px" alt="AgriVision"/>
           AgriVision
         </a>
         <div className="collapse navbar-collapse">
