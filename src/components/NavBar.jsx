@@ -5,9 +5,9 @@ import agrivision from '../assets/agriVision.png'
 export default function Navbar() {
   return (
     <>
-      <nav className="navbar navbar-expand-lg fixed-top navbar-dark px-4">
+      <nav className="navbar navbar-expand-lg  fixed-top navbar-dark px-4">
         <a className="navbar-brand" href="#">
-          <img src={agrivision} width="40px" alt="AgriVision"/>
+        <img src={agrivision} width="40px" alt="AgriVision"/>
           AgriVision
         </a>
         <div className="collapse navbar-collapse">
