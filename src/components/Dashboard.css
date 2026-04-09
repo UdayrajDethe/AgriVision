@@ -1,5 +1,9 @@
+#container {
+
+    background-color: rgb(250, 240, 228);
+}
 .container {
-    margin-left: 270px;
+    margin-left: 277px;
     padding: 20px;
 }
 
@@ -7,8 +11,15 @@
     background-color: #ffffff;
     border-radius: 10px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-    height: 13rem;
+    margin-bottom: 27px;
+    height: 14rem;
 }
 
-id
+.file-container{
+    background-color: rgb(250, 240, 228);
+    height: 10rem;
+    border-radius: 1.5rem;
+    border: 2px dashed #a5aca4;
+    padding: 15px;
+}
+
