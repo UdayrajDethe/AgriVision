@@ -8,7 +8,7 @@ import arrow from '../assets/arrow.png'
 import people from '../assets/people.png'
 import instant from '../assets/instant.png'
 import accurate from '../assets/accurate.png'
-import agrivision from '../assets/agriVision.png'
+import agrivision from '../assets/agrivision.png'
 
 
 export default function Landing() {

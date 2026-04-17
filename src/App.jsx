@@ -1,17 +1,24 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import './App.css'
-import {Navbar,SideBar} from './components/NavBar'
-import Landing from './components/Landing'
+import { SideBar } from './components/NavBar'
 import Dashboard from './components/Dashboard'
+import UploadPage from './components/UploadPage'
+import 'bootstrap-icons/font/bootstrap-icons.css';
+
 
 function App() {
+  const [activePage, setActivePage] = useState('Dashboard')
+
+  if (activePage === 'Upload') {
+    return <UploadPage onBack={() => setActivePage('Dashboard')} />
+  }
+
   return (
     <>
-    {/* <Navbar /> */}
-    {/* <Landing/> */}
-    <SideBar />
-    <Dashboard/>
+      <SideBar active={activePage} onNavigate={setActivePage} />
+      <Dashboard onOpenUpload={() => setActivePage('Upload')} />
     </>
   )
 }
+
 export default App
