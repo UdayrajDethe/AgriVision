@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react'
+﻿import React from 'react'
 import './Dashboard.css'
 
 const DEFAULT_SUMMARY = {
@@ -67,83 +67,20 @@ const formatRelativeTime = (value) => {
 }
 
 export default function Dashboard({ onOpenUpload }) {
-  const [summary, setSummary] = useState(DEFAULT_SUMMARY)
-  const [analyses, setAnalyses] = useState(DEFAULT_ANALYSES)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    const controller = new AbortController()
-    const apiBase = normalizeApiBase(import.meta.env.VITE_API_BASE_URL)
-
-    const loadDashboard = async () => {
-      try {
-        const response = await fetch(`${apiBase}/api/dashboard?limit=5`, {
-          signal: controller.signal,
-        })
-
-        if (!response.ok) {
-          throw new Error(`Request failed with status ${response.status}`)
-        }
-
-        const payload = await response.json()
-
-        if (payload?.summary) {
-          setSummary({
-            totalAnalyses: Number(payload.summary.totalAnalyses) || 0,
-            diseased: Number(payload.summary.diseased) || 0,
-            healthy: Number(payload.summary.healthy) || 0,
-            healthScore: Number(payload.summary.healthScore) || 0,
-          })
-        }
-
-        if (Array.isArray(payload?.recentAnalyses)) {
-          setAnalyses(payload.recentAnalyses)
-        }
-
-        setError('')
-      } catch (requestError) {
-        if (requestError.name !== 'AbortError') {
-          setError('Showing fallback data because the Oracle API is unavailable.')
-        }
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadDashboard()
-
-    return () => {
-      controller.abort()
-    }
-  }, [])
-
-  const healthScore = Math.max(0, Math.min(summary.healthScore, 100))
-  const scoreDegrees = Math.round((healthScore / 100) * 360)
-  const healthTag = getHealthTag(healthScore)
-
-  const summaryCards = useMemo(
-    () => [
-      { label: 'Total Analyses', value: summary.totalAnalyses, detail: 'From Oracle', icon: 'bi-bar-chart-line-fill' },
-      { label: 'Diseased', value: summary.diseased, detail: 'Needs review', icon: 'bi-exclamation-triangle-fill' },
-      { label: 'Healthy', value: summary.healthy, detail: 'Strong growth', icon: 'bi-check-circle-fill' },
-    ],
-    [summary],
-  )
-
   return (
     <section className="dashboard-page">
       <div className="dashboard-shell">
         <header className="dashboard-header">
           <div>
             <p className="dashboard-eyebrow">Crop Monitoring Overview</p>
-            <h1>Welcome back, UserName</h1>
+            <h1>Welcome back, {userName}</h1>
             <p className="dashboard-subtitle">
               Monitor crop health, review recent analyses, and start a new scan from one place.
             </p>
             {isLoading && <p className="dashboard-api-note">Loading data from Oracle...</p>}
             {error && <p className="dashboard-api-error">{error}</p>}
           </div>
+
           <button type="button" className="dashboard-action" onClick={onOpenUpload}>
             <i className="bi bi-camera-fill" aria-hidden="true" />
             Start New Analysis
@@ -195,7 +132,9 @@ export default function Dashboard({ onOpenUpload }) {
                 <button type="button" className="upload-panel" onClick={onOpenUpload}>
                   <i className="bi bi-cloud-arrow-up-fill" aria-hidden="true" />
                   <span className="upload-title">Upload Crop Image</span>
-                  <span className="upload-copy">Drag and drop an image here or click to browse files.</span>
+                  <span className="upload-copy">
+                    Drag and drop an image here or click to browse files.
+                  </span>
                 </button>
               </article>
             </div>
@@ -216,7 +155,7 @@ export default function Dashboard({ onOpenUpload }) {
                     <span>Overall health</span>
                   </div>
                 </div>
-                <p className="score-copy">Live score based on average crop health values stored in Oracle.</p>
+                <p className="score-copy">Most fields are stable, but a few recent disease detections need attention.</p>
               </article>
             </div>
           </div>
@@ -226,10 +165,15 @@ export default function Dashboard({ onOpenUpload }) {
               <article className="dashboard-card">
                 <div className="dashboard-card-title">
                   <span>Recent Analyses</span>
-                  <a href="/" onClick={(event) => event.preventDefault()} className="dashboard-link">
+                  <a
+                    href="/"
+                    onClick={(event) => event.preventDefault()}
+                    className="dashboard-link"
+                  >
                     View all
                   </a>
                 </div>
+
                 <div className="analysis-list">
                   {analyses.length ? (
                     analyses.map((item, index) => (
@@ -240,11 +184,17 @@ export default function Dashboard({ onOpenUpload }) {
                         </div>
                         <span className={`analysis-status ${getStatusClass(item.status)}`}>{item.status ?? 'Unknown'}</span>
                       </div>
-                    ))
-                  ) : (
-                    <p className="analysis-empty">No analyses found in Oracle yet.</p>
-                  )}
+                      <span
+                        className={`analysis-status ${
+                          item.status === 'Healthy' ? 'analysis-status-healthy' : 'analysis-status-diseased'
+                        }`}
+                      >
+                        {item.status}
+                      </span>
+                    </div>
+                  ))}
                 </div>
+
               </article>
             </div>
           </div>
