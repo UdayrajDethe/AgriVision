@@ -1,4 +1,4 @@
-﻿import React from 'react'
+﻿import React, { useEffect, useState } from 'react'
 import './Dashboard.css'
 
 const summaryCards = [
@@ -14,17 +14,27 @@ const analyses = [
 ]
 
 export default function Dashboard({ onOpenUpload }) {
+  const [userName, setUserName] = useState("")
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user"))
+    if (user && user.name) {
+      setUserName(user.name)
+    }
+  }, [])
+
   return (
     <section className="dashboard-page">
       <div className="dashboard-shell">
         <header className="dashboard-header">
           <div>
             <p className="dashboard-eyebrow">Crop Monitoring Overview</p>
-            <h1>Welcome back, UserName</h1>
+            <h1>Welcome back, {userName}</h1>
             <p className="dashboard-subtitle">
               Monitor crop health, review recent analyses, and start a new scan from one place.
             </p>
           </div>
+
           <button type="button" className="dashboard-action" onClick={onOpenUpload}>
             <i className="bi bi-camera-fill" aria-hidden="true" />
             Start New Analysis
@@ -76,7 +86,9 @@ export default function Dashboard({ onOpenUpload }) {
                 <button type="button" className="upload-panel" onClick={onOpenUpload}>
                   <i className="bi bi-cloud-arrow-up-fill" aria-hidden="true" />
                   <span className="upload-title">Upload Crop Image</span>
-                  <span className="upload-copy">Drag and drop an image here or click to browse files.</span>
+                  <span className="upload-copy">
+                    Drag and drop an image here or click to browse files.
+                  </span>
                 </button>
               </article>
             </div>
@@ -93,7 +105,9 @@ export default function Dashboard({ onOpenUpload }) {
                     <span>Overall health</span>
                   </div>
                 </div>
-                <p className="score-copy">Most fields are stable, but a few recent disease detections need attention.</p>
+                <p className="score-copy">
+                  Most fields are stable, but a few recent disease detections need attention.
+                </p>
               </article>
             </div>
           </div>
@@ -103,10 +117,15 @@ export default function Dashboard({ onOpenUpload }) {
               <article className="dashboard-card">
                 <div className="dashboard-card-title">
                   <span>Recent Analyses</span>
-                  <a href="/" onClick={(event) => event.preventDefault()} className="dashboard-link">
+                  <a
+                    href="/"
+                    onClick={(event) => event.preventDefault()}
+                    className="dashboard-link"
+                  >
                     View all
                   </a>
                 </div>
+
                 <div className="analysis-list">
                   {analyses.map((item) => (
                     <div className="analysis-row" key={`${item.crop}-${item.time}`}>
@@ -114,9 +133,12 @@ export default function Dashboard({ onOpenUpload }) {
                         <h3>{item.crop}</h3>
                         <p>{item.time}</p>
                       </div>
+
                       <span
                         className={`analysis-status ${
-                          item.status === 'Healthy' ? 'analysis-status-healthy' : 'analysis-status-diseased'
+                          item.status === 'Healthy'
+                            ? 'analysis-status-healthy'
+                            : 'analysis-status-diseased'
                         }`}
                       >
                         {item.status}
@@ -124,6 +146,7 @@ export default function Dashboard({ onOpenUpload }) {
                     </div>
                   ))}
                 </div>
+
               </article>
             </div>
           </div>

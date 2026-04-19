@@ -26,7 +26,7 @@ export const Navbar = () => {
   )
 }
 
-export const SideBar = ({ active = 'Dashboard', onNavigate }) => {
+export const SideBar = ({ active = 'Dashboard', onNavigate, onLogout }) => {
   const items = [
     { label: 'Dashboard', icon: 'bi-house-door-fill' },
     { label: 'Upload', icon: 'bi-cloud-arrow-up-fill' },
@@ -41,6 +41,7 @@ export const SideBar = ({ active = 'Dashboard', onNavigate }) => {
           <img src={agrivision} alt="AgriVision Logo" width="32px" />
           <h2>AgriVision</h2>
         </div>
+
         <div className="sidebar-items">
           {items.map((item) => (
             <a
@@ -52,13 +53,27 @@ export const SideBar = ({ active = 'Dashboard', onNavigate }) => {
                 onNavigate?.(item.label)
               }}
             >
-              <span className="icon"><i className={`bi ${item.icon}`} aria-hidden="true" /></span>
+              <span className="icon">
+                <i className={`bi ${item.icon}`} aria-hidden="true" />
+              </span>
               {item.label}
             </a>
           ))}
         </div>
+
+        {/* ✅ LOGOUT WORKING */}
         <div className="sidebar-footer">
-          <a href="#"><i className="bi bi-door-open-fill" aria-hidden="true" /> Logout</a>
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault()
+              localStorage.removeItem("token")
+              localStorage.removeItem("user")
+              onLogout()   // 🔥 redirect to login
+            }}
+          >
+            <i className="bi bi-door-open-fill" aria-hidden="true" /> Logout
+          </a>
         </div>
       </div>
     </>
