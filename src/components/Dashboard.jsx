@@ -1,19 +1,136 @@
-﻿import React from 'react'
+﻿import React, { useEffect, useMemo, useState } from 'react'
 import './Dashboard.css'
 
-const summaryCards = [
-  { label: 'Total Analyses', value: '128', detail: 'This month', icon: 'bi-bar-chart-line-fill' },
-  { label: 'Diseased', value: '34', detail: 'Needs review', icon: 'bi-exclamation-triangle-fill' },
-  { label: 'Healthy', value: '94', detail: 'Strong growth', icon: 'bi-check-circle-fill' },
+const DEFAULT_SUMMARY = {
+  totalAnalyses: 128,
+  diseased: 34,
+  healthy: 94,
+  healthScore: 85,
+}
+
+const DEFAULT_ANALYSES = [
+  { crop: 'Tomato Field A', status: 'Diseased', createdAt: '2026-04-18T08:20:00.000Z' },
+  { crop: 'Corn Plot B', status: 'Healthy', createdAt: '2026-04-18T07:30:00.000Z' },
+  { crop: 'Wheat Section C', status: 'Diseased', createdAt: '2026-04-18T03:15:00.000Z' },
 ]
 
-const analyses = [
-  { crop: 'Tomato Field A', status: 'Diseased', time: '10 min ago' },
-  { crop: 'Corn Plot B', status: 'Healthy', time: '1 hour ago' },
-  { crop: 'Wheat Section C', status: 'Diseased', time: 'Today, 8:45 AM' },
-]
+const normalizeApiBase = (value) => {
+  if (!value) {
+    return ''
+  }
+
+  return value.endsWith('/') ? value.slice(0, -1) : value
+}
+
+const getStatusClass = (status) =>
+  status === 'Healthy' ? 'analysis-status-healthy' : status === 'Diseased' ? 'analysis-status-diseased' : 'analysis-status-default'
+
+const getHealthTag = (score) => {
+  if (score >= 75) {
+    return { label: 'Good', className: 'dashboard-tag-good' }
+  }
+
+  if (score >= 50) {
+    return { label: 'Moderate', className: 'dashboard-tag-moderate' }
+  }
+
+  return { label: 'Attention', className: 'dashboard-tag-alert' }
+}
+
+const formatRelativeTime = (value) => {
+  if (!value) {
+    return 'Unknown time'
+  }
+
+  const when = new Date(value)
+
+  if (Number.isNaN(when.getTime())) {
+    return String(value)
+  }
+
+  const deltaMinutes = Math.round((Date.now() - when.getTime()) / 60000)
+
+  if (deltaMinutes < 1) {
+    return 'Just now'
+  }
+
+  if (deltaMinutes < 60) {
+    return `${deltaMinutes} min ago`
+  }
+
+  const deltaHours = Math.round(deltaMinutes / 60)
+  if (deltaHours < 24) {
+    return `${deltaHours} hour${deltaHours > 1 ? 's' : ''} ago`
+  }
+
+  return when.toLocaleString()
+}
 
 export default function Dashboard({ onOpenUpload }) {
+  const [summary, setSummary] = useState(DEFAULT_SUMMARY)
+  const [analyses, setAnalyses] = useState(DEFAULT_ANALYSES)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    const controller = new AbortController()
+    const apiBase = normalizeApiBase(import.meta.env.VITE_API_BASE_URL)
+
+    const loadDashboard = async () => {
+      try {
+        const response = await fetch(`${apiBase}/api/dashboard?limit=5`, {
+          signal: controller.signal,
+        })
+
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`)
+        }
+
+        const payload = await response.json()
+
+        if (payload?.summary) {
+          setSummary({
+            totalAnalyses: Number(payload.summary.totalAnalyses) || 0,
+            diseased: Number(payload.summary.diseased) || 0,
+            healthy: Number(payload.summary.healthy) || 0,
+            healthScore: Number(payload.summary.healthScore) || 0,
+          })
+        }
+
+        if (Array.isArray(payload?.recentAnalyses)) {
+          setAnalyses(payload.recentAnalyses)
+        }
+
+        setError('')
+      } catch (requestError) {
+        if (requestError.name !== 'AbortError') {
+          setError('Showing fallback data because the Oracle API is unavailable.')
+        }
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadDashboard()
+
+    return () => {
+      controller.abort()
+    }
+  }, [])
+
+  const healthScore = Math.max(0, Math.min(summary.healthScore, 100))
+  const scoreDegrees = Math.round((healthScore / 100) * 360)
+  const healthTag = getHealthTag(healthScore)
+
+  const summaryCards = useMemo(
+    () => [
+      { label: 'Total Analyses', value: summary.totalAnalyses, detail: 'From Oracle', icon: 'bi-bar-chart-line-fill' },
+      { label: 'Diseased', value: summary.diseased, detail: 'Needs review', icon: 'bi-exclamation-triangle-fill' },
+      { label: 'Healthy', value: summary.healthy, detail: 'Strong growth', icon: 'bi-check-circle-fill' },
+    ],
+    [summary],
+  )
+
   return (
     <section className="dashboard-page">
       <div className="dashboard-shell">
@@ -24,6 +141,8 @@ export default function Dashboard({ onOpenUpload }) {
             <p className="dashboard-subtitle">
               Monitor crop health, review recent analyses, and start a new scan from one place.
             </p>
+            {isLoading && <p className="dashboard-api-note">Loading data from Oracle...</p>}
+            {error && <p className="dashboard-api-error">{error}</p>}
           </div>
           <button type="button" className="dashboard-action" onClick={onOpenUpload}>
             <i className="bi bi-camera-fill" aria-hidden="true" />
@@ -85,15 +204,19 @@ export default function Dashboard({ onOpenUpload }) {
               <article className="dashboard-card dashboard-score-card">
                 <div className="dashboard-card-title">
                   <span>Crop Health Score</span>
-                  <span className="dashboard-tag dashboard-tag-good">Good</span>
+                  <span className={`dashboard-tag ${healthTag.className}`}>{healthTag.label}</span>
                 </div>
-                <div className="score-ring" aria-label="Crop health score is 85 percent">
+                <div
+                  className="score-ring"
+                  style={{ background: `conic-gradient(#355e3b 0 ${scoreDegrees}deg, #d7e4d2 ${scoreDegrees}deg 360deg)` }}
+                  aria-label={`Crop health score is ${healthScore} percent`}
+                >
                   <div className="score-ring-inner">
-                    <strong>85%</strong>
+                    <strong>{healthScore}%</strong>
                     <span>Overall health</span>
                   </div>
                 </div>
-                <p className="score-copy">Most fields are stable, but a few recent disease detections need attention.</p>
+                <p className="score-copy">Live score based on average crop health values stored in Oracle.</p>
               </article>
             </div>
           </div>
@@ -108,21 +231,19 @@ export default function Dashboard({ onOpenUpload }) {
                   </a>
                 </div>
                 <div className="analysis-list">
-                  {analyses.map((item) => (
-                    <div className="analysis-row" key={`${item.crop}-${item.time}`}>
-                      <div>
-                        <h3>{item.crop}</h3>
-                        <p>{item.time}</p>
+                  {analyses.length ? (
+                    analyses.map((item, index) => (
+                      <div className="analysis-row" key={`${item.crop}-${item.createdAt ?? index}`}>
+                        <div>
+                          <h3>{item.crop ?? 'Unknown Crop'}</h3>
+                          <p>{formatRelativeTime(item.createdAt)}</p>
+                        </div>
+                        <span className={`analysis-status ${getStatusClass(item.status)}`}>{item.status ?? 'Unknown'}</span>
                       </div>
-                      <span
-                        className={`analysis-status ${
-                          item.status === 'Healthy' ? 'analysis-status-healthy' : 'analysis-status-diseased'
-                        }`}
-                      >
-                        {item.status}
-                      </span>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p className="analysis-empty">No analyses found in Oracle yet.</p>
+                  )}
                 </div>
               </article>
             </div>

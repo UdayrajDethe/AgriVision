@@ -309,3 +309,37 @@
     justify-content: center;
   }
 }
+.dashboard-api-note,
+.dashboard-api-error {
+  margin: 10px 0 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.dashboard-api-note {
+  color: #365f3a;
+}
+
+.dashboard-api-error {
+  color: #9e3f2d;
+}
+
+.dashboard-tag-moderate {
+  background: #fdeebd;
+  color: #7a5a03;
+}
+
+.dashboard-tag-alert {
+  background: #f9ddd3;
+  color: #983a24;
+}
+
+.analysis-status-default {
+  background: #eceff1;
+  color: #42545c;
+}
+
+.analysis-empty {
+  margin: 0;
+  color: #5f6a61;
+}

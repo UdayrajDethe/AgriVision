@@ -3,7 +3,7 @@ import './App.css'
 import { SideBar } from './components/NavBar'
 import Dashboard from './components/Dashboard'
 import UploadPage from './components/UploadPage'
-import 'bootstrap-icons/font/bootstrap-icons.css';
+import 'bootstrap-icons/font/bootstrap-icons.css'
 
 
 function App() {
