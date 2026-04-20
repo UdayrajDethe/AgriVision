@@ -84,7 +84,9 @@ body {
 }
 
 .card button:hover, .auth-card button:hover {
-  background: linear-gradient(45deg, #2e7d32, #1b5e20);
+  background: linear-gradient(45deg, #2f8a3a, #1f6a29);
+  box-shadow: 0 10px 24px rgba(34, 111, 45, 0.35);
+  transform: translateY(-1px);
 }
 
 /* ===== LINKS ===== */

@@ -2,7 +2,9 @@ import { useState } from "react";
 import axios from "axios";
 import "./style.css";
 
-function Register({ onBackToLogin }) {
+const API_BASE = (import.meta.env.VITE_AUTH_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+
+function Register({ onBackToLogin, onBackToLanding }) {
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -40,7 +42,7 @@ function Register({ onBackToLogin }) {
     if (Object.keys(validationErrors).length > 0) return;
 
     try {
-      await axios.post("http://localhost:5000/api/auth/register", form);
+      await axios.post(`${API_BASE}/api/auth/register`, form);
       alert("Registration Successful");
       onBackToLogin();   // changed here
     } catch (err) {
@@ -78,6 +80,9 @@ function Register({ onBackToLogin }) {
 
         <p>
           Already have an account? <span onClick={onBackToLogin}>Login</span>
+        </p>
+        <p>
+          <span onClick={onBackToLanding}>Back to Home</span>
         </p>
       </div>
     </div>
