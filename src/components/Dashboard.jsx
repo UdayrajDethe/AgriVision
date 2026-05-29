@@ -2,17 +2,59 @@
 import './Dashboard.css'
 
 const DEFAULT_SUMMARY = {
-  totalAnalyses: 128,
-  diseased: 34,
-  healthy: 94,
-  healthScore: 85,
+  totalAnalyses: 0,
+  diseased: 0,
+  healthy: 0,
+  healthScore: 0,
 }
 
-const DEFAULT_ANALYSES = [
-  { crop: 'Tomato Field A', status: 'Diseased', createdAt: '2026-04-18T08:20:00.000Z' },
-  { crop: 'Corn Plot B', status: 'Healthy', createdAt: '2026-04-18T07:30:00.000Z' },
-  { crop: 'Wheat Section C', status: 'Diseased', createdAt: '2026-04-18T03:15:00.000Z' },
-]
+const DEFAULT_WEATHER = {
+  temperature: 28,
+  condition: 'Partly Cloudy',
+  humidity: 62,
+  windSpeed: 9,
+}
+
+const WEATHER_CODE_LABELS = {
+  0: 'Clear Sky',
+  1: 'Mainly Clear',
+  2: 'Partly Cloudy',
+  3: 'Overcast',
+  45: 'Fog',
+  48: 'Fog',
+  51: 'Light Drizzle',
+  53: 'Drizzle',
+  55: 'Heavy Drizzle',
+  61: 'Light Rain',
+  63: 'Rain',
+  65: 'Heavy Rain',
+  71: 'Light Snow',
+  73: 'Snow',
+  75: 'Heavy Snow',
+  80: 'Light Showers',
+  81: 'Showers',
+  82: 'Heavy Showers',
+  95: 'Thunderstorm',
+  96: 'Thunderstorm',
+  99: 'Thunderstorm',
+}
+
+const WEATHER_LATITUDE = Number(import.meta.env.VITE_WEATHER_LATITUDE) || 20.5937
+const WEATHER_LONGITUDE = Number(import.meta.env.VITE_WEATHER_LONGITUDE) || 78.9629
+
+const getBrowserPosition = () =>
+  new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('Geolocation is not supported'))
+      return
+    }
+
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: false,
+      maximumAge: 10 * 60 * 1000,
+      timeout: 8000,
+    })
+  })
 
 const normalizeApiBase = (value) => {
   if (!value) {
@@ -24,6 +66,108 @@ const normalizeApiBase = (value) => {
 
 const getStatusClass = (status) =>
   status === 'Healthy' ? 'analysis-status-healthy' : status === 'Diseased' ? 'analysis-status-diseased' : 'analysis-status-default'
+
+const getStoredUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem('user') || 'null')
+  } catch {
+    return null
+  }
+}
+
+const getStoredToken = () => localStorage.getItem('token') || ''
+
+const getPredictedStatus = (item) => {
+  const status = item.status
+
+  if (status === 'Healthy' || status === 'Diseased') {
+    return status
+  }
+
+  const label = String(item.predictedLabel || '').toLowerCase()
+
+  if (label.includes('healthy')) {
+    return 'Healthy'
+  }
+
+  if (label) {
+    return 'Diseased'
+  }
+
+  return 'Unknown'
+}
+
+const getPredictedCrop = (item) => {
+  if (item.crop && item.crop !== 'Unknown Crop') {
+    return item.crop
+  }
+
+  const label = String(item.predictedLabel || '').replaceAll('_', ' ').trim()
+  return label.split(/\s+/)[0] || 'Unknown Crop'
+}
+
+const normalizeHistoryItem = (item) => ({
+  ...item,
+  crop: getPredictedCrop(item),
+  status: getPredictedStatus(item),
+})
+
+const buildSummary = (items) => {
+  const totalAnalyses = items.length
+  const healthy = items.filter((item) => item.status === 'Healthy').length
+  const diseased = items.filter((item) => item.status === 'Diseased').length
+
+  const healthScores = items.map((item) => {
+    const confidence = Number(item.confidence) || 0
+
+    if (item.status === 'Healthy') {
+      return confidence * 100
+    }
+
+    if (item.status === 'Diseased') {
+      return (1 - confidence) * 100
+    }
+
+    return 0
+  })
+
+  const healthScore = healthScores.length
+    ? Math.round(healthScores.reduce((total, score) => total + score, 0) / healthScores.length)
+    : 0
+
+  return {
+    totalAnalyses,
+    diseased,
+    healthy,
+    healthScore,
+  }
+}
+
+const getAnalysisTitle = (item) => {
+  if (item.predictedLabel) {
+    return item.predictedLabel
+  }
+
+  return item.crop || 'Unknown Crop'
+}
+
+const getAnalysisDetail = (item) => {
+  const parts = []
+
+  if (item.crop) {
+    parts.push(item.crop)
+  }
+
+  if (item.imageName) {
+    parts.push(item.imageName)
+  }
+
+  if (Number.isFinite(Number(item.confidence))) {
+    parts.push(`${Math.round(Number(item.confidence) * 100)}% confidence`)
+  }
+
+  return parts.join(' - ')
+}
 
 const getHealthTag = (score) => {
   if (score >= 75) {
@@ -66,52 +210,128 @@ const formatRelativeTime = (value) => {
   return when.toLocaleString()
 }
 
-export default function Dashboard({ onOpenUpload }) {
+export default function Dashboard({ activePage = 'Dashboard', onOpenUpload }) {
   const [summary, setSummary] = useState(DEFAULT_SUMMARY)
-  const [analyses, setAnalyses] = useState(DEFAULT_ANALYSES)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [analyses, setAnalyses] = useState([])
+  const [weather, setWeather] = useState(DEFAULT_WEATHER)
+  const [isWeatherLoading, setIsWeatherLoading] = useState(true)
+  const [weatherError, setWeatherError] = useState('')
+  const [weatherLocation, setWeatherLocation] = useState('Current location')
+  const [isHistoryLoading, setIsHistoryLoading] = useState(true)
+  const [historyError, setHistoryError] = useState('')
+  const isAnalysisView = activePage === 'Analysis'
 
   useEffect(() => {
     const controller = new AbortController()
-    const apiBase = normalizeApiBase(import.meta.env.VITE_API_BASE_URL)
+    const apiBase = normalizeApiBase(import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000')
+    const token = getStoredToken()
 
-    const loadDashboard = async () => {
+    const loadHistory = async () => {
+      if (!token) {
+        setAnalyses([])
+        setHistoryError('Login required to view analysis history.')
+        setIsHistoryLoading(false)
+        return
+      }
+
       try {
-        const response = await fetch(`${apiBase}/api/dashboard?limit=5`, {
+        const response = await fetch(`${apiBase}/api/analysis/history`, {
+          signal: controller.signal,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        const payload = await response.json()
+
+        if (!response.ok) {
+          throw new Error(payload.details || payload.message || `Request failed with status ${response.status}`)
+        }
+
+        const history = Array.isArray(payload?.history) ? payload.history.map(normalizeHistoryItem) : []
+
+        setAnalyses(history)
+        setSummary(buildSummary(history))
+        setHistoryError('')
+      } catch (requestError) {
+        if (requestError.name !== 'AbortError') {
+          setAnalyses([])
+          setSummary(DEFAULT_SUMMARY)
+          setHistoryError(requestError.message || 'Failed to fetch analysis history.')
+        }
+      } finally {
+        setIsHistoryLoading(false)
+      }
+    }
+
+    loadHistory()
+
+    return () => {
+      controller.abort()
+    }
+  }, [])
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    const loadWeather = async () => {
+      try {
+        let latitude = WEATHER_LATITUDE
+        let longitude = WEATHER_LONGITUDE
+        let locationLabel = 'Default location'
+
+        try {
+          const position = await getBrowserPosition()
+          latitude = position.coords.latitude
+          longitude = position.coords.longitude
+          locationLabel = 'Current location'
+        } catch {
+          locationLabel = 'Default location'
+        }
+
+        const weatherUrl = new URL('https://api.open-meteo.com/v1/forecast')
+        weatherUrl.search = new URLSearchParams({
+          latitude: String(latitude),
+          longitude: String(longitude),
+          current: 'temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m',
+          timezone: 'auto',
+        }).toString()
+
+        const response = await fetch(weatherUrl, {
           signal: controller.signal,
         })
 
         if (!response.ok) {
-          throw new Error(`Request failed with status ${response.status}`)
+          throw new Error(`Weather request failed with status ${response.status}`)
         }
 
         const payload = await response.json()
+        const current = payload?.current
 
-        if (payload?.summary) {
-          setSummary({
-            totalAnalyses: Number(payload.summary.totalAnalyses) || 0,
-            diseased: Number(payload.summary.diseased) || 0,
-            healthy: Number(payload.summary.healthy) || 0,
-            healthScore: Number(payload.summary.healthScore) || 0,
-          })
+        if (!current) {
+          throw new Error('Weather response did not include current conditions')
         }
 
-        if (Array.isArray(payload?.recentAnalyses)) {
-          setAnalyses(payload.recentAnalyses)
-        }
-
-        setError('')
+        setWeather({
+          temperature: Math.round(Number(current.temperature_2m) || 0),
+          condition: WEATHER_CODE_LABELS[current.weather_code] || 'Current Weather',
+          humidity: Math.round(Number(current.relative_humidity_2m) || 0),
+          windSpeed: Math.round(Number(current.wind_speed_10m) || 0),
+        })
+        setWeatherLocation(locationLabel)
+        setWeatherError('')
       } catch (requestError) {
         if (requestError.name !== 'AbortError') {
-          setError('Showing fallback data because the Oracle API is unavailable.')
+          setWeather(DEFAULT_WEATHER)
+          setWeatherLocation('Default location')
+          setWeatherError('Live weather unavailable')
         }
       } finally {
-        setIsLoading(false)
+        setIsWeatherLoading(false)
       }
     }
 
-    loadDashboard()
+    loadWeather()
 
     return () => {
       controller.abort()
@@ -131,18 +351,22 @@ export default function Dashboard({ onOpenUpload }) {
     [summary],
   )
 
+  const loggedInUserName = getStoredUser()?.name || 'Farmer'
+
   return (
     <section className="dashboard-page">
       <div className="dashboard-shell">
         <header className="dashboard-header">
           <div>
             <p className="dashboard-eyebrow">Crop Monitoring Overview</p>
-            <h1>Welcome back, UserName</h1>
+            <h1>{isAnalysisView ? 'Analysis History' : `Welcome back, ${loggedInUserName}`}</h1>
             <p className="dashboard-subtitle">
-              Monitor crop health, review recent analyses, and start a new scan from one place.
+              {isAnalysisView
+                ? 'Review every saved prediction from your uploaded crop images.'
+                : 'Monitor crop health, review recent analyses, and start a new scan from one place.'}
             </p>
-            {isLoading && <p className="dashboard-api-note">Loading data from Oracle...</p>}
-            {error && <p className="dashboard-api-error">{error}</p>}
+            {isHistoryLoading && <p className="dashboard-api-note">Loading your analysis history...</p>}
+            {historyError && <p className="dashboard-api-error">{historyError}</p>}
           </div>
           <button type="button" className="dashboard-action" onClick={onOpenUpload}>
             <i className="bi bi-camera-fill" aria-hidden="true" />
@@ -151,6 +375,7 @@ export default function Dashboard({ onOpenUpload }) {
         </header>
 
         <div className="dashboard-grid">
+          {!isAnalysisView && (
           <div className="row g-4">
             {summaryCards.map((card) => (
               <div className="col-12 col-sm-6 col-xl-3" key={card.label}>
@@ -174,17 +399,21 @@ export default function Dashboard({ onOpenUpload }) {
                   <i className="bi bi-cloud-sun-fill" aria-hidden="true" />
                 </div>
                 <div className="weather-main">
-                  <strong>28 C</strong>
-                  <span>Partly Cloudy</span>
+                  <strong>{isWeatherLoading ? '--' : `${weather.temperature} C`}</strong>
+                  <span>{isWeatherLoading ? 'Loading weather...' : weather.condition}</span>
                 </div>
                 <div className="weather-meta">
-                  <span>Humidity 62%</span>
-                  <span>Wind 9 km/h</span>
+                  <span>Humidity {weather.humidity}%</span>
+                  <span>Wind {weather.windSpeed} km/h</span>
                 </div>
+                <p className="weather-location">{weatherLocation}</p>
+                {weatherError && <p className="weather-error">{weatherError}</p>}
               </article>
             </div>
           </div>
+          )}
 
+          {!isAnalysisView && (
           <div className="row g-4">
             <div className="col-12 col-lg-7">
               <article className="dashboard-card">
@@ -220,23 +449,27 @@ export default function Dashboard({ onOpenUpload }) {
               </article>
             </div>
           </div>
+          )}
 
           <div className="row g-4">
             <div className="col-12">
               <article className="dashboard-card">
                 <div className="dashboard-card-title">
-                  <span>Recent Analyses</span>
+                  <span>{isAnalysisView ? 'All Saved Predictions' : 'Recent Analyses'}</span>
                   <a href="/" onClick={(event) => event.preventDefault()} className="dashboard-link">
-                    View all
+                    {analyses.length} saved
                   </a>
                 </div>
                 <div className="analysis-list">
                   {analyses.length ? (
                     analyses.map((item, index) => (
-                      <div className="analysis-row" key={`${item.crop}-${item.createdAt ?? index}`}>
+                      <div className="analysis-row" key={item.analysisId || `${item.crop}-${item.createdAt ?? index}`}>
                         <div>
-                          <h3>{item.crop ?? 'Unknown Crop'}</h3>
-                          <p>{formatRelativeTime(item.createdAt)}</p>
+                          <h3>{getAnalysisTitle(item)}</h3>
+                          <p>
+                            {formatRelativeTime(item.createdAt)}
+                            {getAnalysisDetail(item) ? ` - ${getAnalysisDetail(item)}` : ''}
+                          </p>
                         </div>
                         <span className={`analysis-status ${getStatusClass(item.status)}`}>{item.status ?? 'Unknown'}</span>
                       </div>

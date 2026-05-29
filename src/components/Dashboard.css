@@ -148,6 +148,20 @@
   font-size: 0.95rem;
 }
 
+.weather-location {
+  margin: 10px 0 0;
+  color: #4d7256;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.weather-error {
+  margin: 10px 0 0;
+  color: #9e3f2d;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
 .dashboard-tag {
   border-radius: 999px;
   padding: 6px 10px;

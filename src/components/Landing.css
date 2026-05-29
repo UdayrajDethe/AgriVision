@@ -31,6 +31,9 @@
     font-weight: 700;
 }
 
+.greet{
+    color: #deda6c;
+}
 .landing-nav-links {
     display: flex;
     align-items: center;

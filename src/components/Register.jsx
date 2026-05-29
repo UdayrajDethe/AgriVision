@@ -2,7 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import "./style.css";
 
-const API_BASE = (import.meta.env.VITE_AUTH_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+const API_BASE = (import.meta.env.VITE_AUTH_API_BASE_URL || import.meta.env.VITE_API_BASE_URL || "http://localhost:4000").replace(/\/$/, "");
 
 function Register({ onBackToLogin, onBackToLanding }) {
   const [form, setForm] = useState({
@@ -42,11 +42,12 @@ function Register({ onBackToLogin, onBackToLanding }) {
     if (Object.keys(validationErrors).length > 0) return;
 
     try {
-      await axios.post(`${API_BASE}/api/auth/register`, form);
+      const { confirmPassword: _confirmPassword, ...payload } = form;
+      await axios.post(`${API_BASE}/api/auth/register`, payload);
       alert("Registration Successful");
       onBackToLogin();   // changed here
     } catch (err) {
-      alert(err.response?.data?.message || "Error");
+      alert(err.response?.data?.details || err.response?.data?.message || "Registration failed. Please check the backend connection.");
     }
   };
 

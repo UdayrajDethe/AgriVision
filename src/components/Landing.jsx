@@ -53,8 +53,8 @@ export default function Landing({ onStartScanning, onTakePictureUpload, onGetSta
         <div className="container h-100">
           <div className="row h-100 align-items-center">
             <div className="col-lg-6 col-md-7 landing-text">
-              <h1 className="display-4 fw-bold text-white">Welcome to AgriVision</h1>
-              <p className="lead fw-bold text-white mt-3">
+              <h1 className="greet display-4 fw-bold ">Welcome to AgriVision</h1>
+              <p className="greet lead fw-bold mt-3">
                 AI-powered crop disease detection to assist farmers.
                 Identify plant diseases instantly and get treatment recommendations.
               </p>

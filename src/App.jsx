@@ -36,7 +36,7 @@ function App() {
   }
 
   if (activePage === 'Upload') {
-    return <UploadPage onBack={() => setActivePage('Dashboard')} />
+    return <UploadPage onBack={() => setActivePage('Dashboard')} onOpenHistory={() => setActivePage('Analysis')} />
   }
 
   return (
@@ -49,7 +49,7 @@ function App() {
           setActivePage('Landing')
         }}
       />
-      <Dashboard onOpenUpload={() => setActivePage('Upload')} />
+      <Dashboard activePage={activePage} onOpenUpload={() => setActivePage('Upload')} />
     </>
   )
 }
